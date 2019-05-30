@@ -1,8 +1,10 @@
 #!/bin/bash
 
+export GO_ROOT=${HOME}/work/go-quick
+
 if [ "z${MAXNOISE}" = "z" ] ; then
     MAXNOISE=1
-    echo Lacking environment variable MAXNOISE, using default value "${MAXNOISE}" (percent)
+    echo Lacking environment variable MAXNOISE, using default value "${MAXNOISE} (percent)"
 fi
 
 if [ "z${BENCH}" = "z" ] ; then
