@@ -1,0 +1,42 @@
+
+[[Configurations]]
+  Name = "WORST$H"
+  GcEnv = ["GO_INLRECORDS=$PWD/worst$H.txt", "GO_INLMAXBUDGET=1280","GO_INLBIGMAXBUDGET=640"]
+  Root = "$HOME/work/go-quick/"
+  RunFlags = ["-test.count=5"]
+  Disabled = true
+
+[[Configurations]]
+  Name = "BEST$H"
+  GcEnv = ["GO_INLRECORDS=$PWD/best$H.txt", "GO_INLMAXBUDGET=1280","GO_INLBIGMAXBUDGET=640"]
+  Root = "$HOME/work/go-quick/"
+  RunFlags = ["-test.count=5"]
+  Disabled = true
+
+[[Configurations]]
+  Name = "RECORD"
+  GcEnv = ["GO_INLRECORDS=_", "GO_INLRECORDSIZE=80", "GO_INLMAXBUDGET=1280","GO_INLBIGMAXBUDGET=320"]
+  Root = "$HOME/work/go-quick/"
+  RunFlags = ["-test.count=1"]
+  Disabled = true
+
+[[Configurations]]
+  Name = "TEST"
+  GcEnv = [ "GO_INLRECORDS=$PWD/inlines.txt", "GO_INLMAXBUDGET=1280","GO_INLBIGMAXBUDGET=640"]
+  Root = "$HOME/work/go-quick/"
+  RunFlags = ["-test.count=5"]
+  Disabled = true
+
+[[Configurations]]
+  Name = "VALID"
+  GcEnv = ["GO_INLRECORDS=$PWD/valid.txt", "GO_INLMAXBUDGET=1280","GO_INLBIGMAXBUDGET=640"]
+  Root = "$HOME/work/go-quick/"
+  RunFlags = ["-test.count=5"]
+  Disabled = true
+
+[[Configurations]]
+  Name = "BASE"
+  Root = "$HOME/work/go-quick/"
+  RunFlags = ["-test.count=5"]
+  Disabled = true
+
