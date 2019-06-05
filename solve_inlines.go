@@ -242,17 +242,14 @@ Because solving for the best/worst inlines can be time-consuming, %s also suppor
 
 	trials := readBenchmarks(randomBenchFile)
 
-	// Get max, min, and average benchmark times.
-	max := 0.0
-	min := 1.0e100
+	// Get max, min, median, and average benchmark times.
+	sort.Slice(trials, func(i,j int) bool {return trials[i].time < trials[j].time})
+	min := trials[0].time
+	max := trials[len(trials)-1].time
+	median := (trials[(len(trials)-1)/2].time + trials[len(trials)/2].time)/2
+
 	total := 0.0
 	for _, t := range trials {
-		if t.time > max {
-			max = t.time
-		}
-		if t.time < min {
-			min = t.time
-		}
 		total += t.time
 	}
 	avg := total / float64(len(trials))
@@ -265,7 +262,7 @@ Because solving for the best/worst inlines can be time-consuming, %s also suppor
 		fillRow(t.seed, t.threshold, a.RawRowView(i), avg)
 		b.SetVec(i, float64(t.time))
 	}
-	fmt.Printf("# Number of inlines is %d, trials is %d, min time is %f, avg time is %f, max time is %f\n", len(inlines), len(trials), min, avg, max)
+	fmt.Printf("# Number of inlines is %d, trials is %d, min time is %f, median time is %f, avg time is %f, max time is %f\n", len(inlines), len(trials), min, median, avg, max)
 
 	v.SolveVec(a, b)
 	// vstats := append([]float64{}, vstore...)
