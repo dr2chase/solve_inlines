@@ -1,13 +1,8 @@
-#!/bin/bash
+#!/bin/bash 
 
 if [ "z${MAXNOISE}" = "z" ] ; then
-    MAXNOISE=1
+    MAXNOISE=3
     echo Lacking environment variable MAXNOISE, using default value "${MAXNOISE} (percent)"
-fi
-
-if [ "z${BENCH}" = "z" ] ; then
-    BENCH="semver"
-    echo Lacking environment variable BENCH, using default value "${BENCH}"
 fi
 
 # Perflock is preferred
@@ -16,15 +11,7 @@ if [ "z${PERFLOCK}" = "z" -a `uname` = "Linux" ] ; then
     echo "You can get cleaner benchmark results on Linux with perflock: go get github.com/aclements/perflock/..."
 fi
 
-if [ "z"`which bent` = "z" ] ; then
-    echo "To run benchmarks, you need bent: go get github.com/dr2chase/bent; bent -I"
-    exit 1
-fi
-
-if [ ! -e gopath ] ; then
-    echo "To run benchmarks, you need to initialize this directory for running bent (it writes a bunch of files): bent -I"
-    exit 1
-fi
+BENCH=compile
 
 BENCH_INLINES="${BENCH}.inlines"
 BENCH_TRIALS="${BENCH}.trials"
@@ -33,7 +20,7 @@ BENCH_LOG="${BENCH}.log"
 
 # These ought to be okay.
 THRESHOLD=67
-COUNT=10000
+COUNT=100000
 SEED0=1
 
 # Begin one after the last trial run
@@ -46,7 +33,8 @@ fi
 # Create the record of all the inlines if none exists
 if [ ! -e "${BENCH_INLINES}" ] ; then 
    echo "Creating list of all inline sites in ${BENCH_INLINES}"
-   bent -U -v -b "${BENCH}" -N=0 -C conf-inl.toml -c RECORD  > "${BENCH_INLINES}".tmp
+   mkdir -p testbin
+   GO_INLMAXBUDGET=640 GO_INLBIGMAXBUDGET=160 GO_INLRECORDSIZE=20 GO_INLRECORDS=_ go build -a cmd/compile >& compile.inlines.tmp
    grep INLINE_SITE "${BENCH_INLINES}".tmp | sort -u > "${BENCH_INLINES}"
 fi
 
@@ -55,10 +43,14 @@ SEEDN=$((SEED0 + COUNT))
 # FYI `eval echo {${SEED0}..${SEEDN}}` does what you want.
 for S in `eval echo {${SEED0}..${SEEDN}}` ; do 
 # expects environment variables T and S to be set
-while \
-        rm -rf goroots testbin
-        solve_inlines -seed ${S} -threshold ${THRESHOLD} "${BENCH_INLINES}" > inlines.txt
-        $PERFLOCK bent -U -v -b "${BENCH}" -N=5 -C conf-inl.toml -c TEST >> "${BENCH_LOG}"
+    rm -rf goroots testbin
+    mkdir -p testbin
+    solve_inlines -seed ${S} -threshold ${THRESHOLD} "${BENCH_INLINES}" > inlines.txt
+	go clean -cache
+	GO_INLMAXBUDGET=640 GO_INLBIGMAXBUDGET=160 GO_INLRECORDSIZE=20 GO_INLRECORDS=$PWD/inlines.txt go build -a cmd/compile 
+	while \
+  		GOMAXPROCS=4 $PERFLOCK compilebench -compile ${PWD}/compile -count 25 -run BenchmarkCompile | sed -E -e 's?[0-9]+ ns/op ??' > testbin/compile.TEST.stdout
+
         benchstat -geomean -csv testbin/*.TEST.stdout >& "${BENCH_STAT}"
 
         tail -1 "${BENCH_STAT}" >> "${BENCH_LOG}"
@@ -77,9 +69,9 @@ while \
         else
                 test ${NOISE} -gt ${MAXNOISE}
         fi
-do
+	do
         echo "Too noisy (${NOISE}), repeating test"
-done 
+	done 
 
 echo "${THRESHOLD},${S},${TIME},${NOISE}" >> "${BENCH_TRIALS}"
 done
