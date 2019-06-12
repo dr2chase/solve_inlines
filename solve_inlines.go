@@ -207,26 +207,13 @@ Because solving for the best/worst inlines can be time-consuming, %s also suppor
 		vstore := make([]float64, 1+len(inlines))
 		// Use fillRow because thus only one copy of the RNG selection.
 		fillRow(int64(seed), int32(threshold), vstore, -1)
+		csvw := csv.NewWriter(os.Stdout)
 		for i, l := range inlines {
 			if vstore[i] > 0 {
-				value := ""
-				for j, s := range l.line {
-					a := s
-					if strings.Contains(s, ",") || len(s) > 0 && s[0] == '"' {
-						// Quoting is required for CSV.
-						if strings.ContainsAny(s, "\"") {
-							s = strings.Replace(s, "\"", "\"\"", -1)
-						}
-						a = "\"" + s + "\""
-					}
-					if j > 0 {
-						value += ","
-					}
-					value += fmt.Sprintf("%v", a)
-				}
-				fmt.Println(value)
+				csvw.Write(l.line)
 			}
 		}
+		csvw.Flush()
 		return
 	}
 
