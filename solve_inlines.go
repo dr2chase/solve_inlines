@@ -1,16 +1,6 @@
-// Copyright 2019 Google LLC
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-
-//     https://www.apache.org/licenses/LICENSE-2.0
-
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2019 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
 package main
 
@@ -144,7 +134,7 @@ func readBenchmarks(fileName string) []benchmarkTrial {
 				panic(err)
 			}
 		}
-		rec := benchmarkTrial{seed: int64(seed), threshold: int32(threshold), time: time, noise:int32(noise)}
+		rec := benchmarkTrial{seed: int64(seed), threshold: int32(threshold), time: time, noise: int32(noise)}
 		result = append(result, rec)
 	}
 	return result
@@ -243,10 +233,10 @@ Because solving for the best/worst inlines can be time-consuming, %s also suppor
 	trials := readBenchmarks(randomBenchFile)
 
 	// Get max, min, median, and average benchmark times.
-	sort.Slice(trials, func(i,j int) bool {return trials[i].time < trials[j].time})
+	sort.Slice(trials, func(i, j int) bool { return trials[i].time < trials[j].time })
 	min := trials[0].time
 	max := trials[len(trials)-1].time
-	median := (trials[(len(trials)-1)/2].time + trials[len(trials)/2].time)/2
+	median := (trials[(len(trials)-1)/2].time + trials[len(trials)/2].time) / 2
 
 	total := 0.0
 	for _, t := range trials {

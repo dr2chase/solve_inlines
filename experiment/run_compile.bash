@@ -1,5 +1,7 @@
 #!/bin/bash 
 
+echo "THIS SCRIPT IS OBSOLETE AND INCLUDED BECAUSE OF AN ONGOING EXPERIMENT"
+
 if [ "z${MAXNOISE}" = "z" ] ; then
     MAXNOISE=3
     echo Lacking environment variable MAXNOISE, using default value "${MAXNOISE} (percent)"
@@ -23,6 +25,13 @@ THRESHOLD=67
 COUNT=100000
 SEED0=1
 
+# For compiler testing, goal is to figure out which inlines really matter, and if any hurt;
+# there's some suspicion that there are inlines in the 20-80 range that are bad for performance.
+# CANNOT export the GO_INL versions of these, else it might perturb the benchmark itself.
+MAXBUDGET=640
+BIGMAXBUDGET=160
+RECORDSIZE=20
+
 # Begin one after the last trial run
 if [ -e "${BENCH_TRIALS}" ] ; then
     SEED=`tail -1 "${BENCH_TRIALS}" | awk -F , '{print 0+$2}'`
@@ -34,7 +43,7 @@ fi
 if [ ! -e "${BENCH_INLINES}" ] ; then 
    echo "Creating list of all inline sites in ${BENCH_INLINES}"
    mkdir -p testbin
-   GO_INLMAXBUDGET=640 GO_INLBIGMAXBUDGET=160 GO_INLRECORDSIZE=20 GO_INLRECORDS=_ go build -a cmd/compile >& compile.inlines.tmp
+   GO_INLMAXBUDGET=${MAXBUDGET} GO_INLBIGMAXBUDGET=${BIGMAXBUDGET} GO_INLRECORDSIZE=${RECORDSIZE} GO_INLRECORDS=_ go build -a cmd/compile >& "${BENCH_INLINES}".tmp
    grep INLINE_SITE "${BENCH_INLINES}".tmp | sort -u > "${BENCH_INLINES}"
 fi
 
@@ -42,12 +51,13 @@ SEEDN=$((SEED0 + COUNT))
 
 # FYI `eval echo {${SEED0}..${SEEDN}}` does what you want.
 for S in `eval echo {${SEED0}..${SEEDN}}` ; do 
-# expects environment variables T and S to be set
     rm -rf goroots testbin
     mkdir -p testbin
     solve_inlines -seed ${S} -threshold ${THRESHOLD} "${BENCH_INLINES}" > inlines.txt
 	go clean -cache
-	GO_INLMAXBUDGET=640 GO_INLBIGMAXBUDGET=160 GO_INLRECORDSIZE=20 GO_INLRECORDS=$PWD/inlines.txt go build -a cmd/compile 
+    GO_INLMAXBUDGET=${MAXBUDGET} GO_INLBIGMAXBUDGET=${BIGMAXBUDGET} GO_INLRECORDSIZE=${RECORDSIZE} GO_INLRECORDS=$PWD/inlines.txt go build -a cmd/compile 
+    # GOMAXPROCS below assumes a machine with well more than that, goal is to stamp out variation everywhere.
+    # Compilebench runs the compiler single-threaded, but how does compilebench itself run?
 	while \
   		GOMAXPROCS=4 $PERFLOCK compilebench -compile ${PWD}/compile -count 25 -run BenchmarkCompile | sed -E -e 's?[0-9]+ ns/op ??' > testbin/compile.TEST.stdout
 
@@ -62,6 +72,7 @@ for S in `eval echo {${SEED0}..${SEEDN}}` ; do
         else
                 NOISE=`tail -1 "${BENCH_STAT}" | awk -F , '{gsub(" ","",$3); print $3}' | sed -e '1,$s/%//'`
         fi
+        # awk: strip spaces out of second comma-separated field and print it.
         TIME=`tail -1 "${BENCH_STAT}" | awk -F , '{gsub(" ","",$2); print $2}' ` 
         echo "Seed=${S}, Threshold=${THRESHOLD}, Time=${TIME}, Max noise=${NOISE}"
         if test -z "${NOISE}" ; then

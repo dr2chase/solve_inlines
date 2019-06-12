@@ -2,6 +2,12 @@
 
 export GO_ROOT=${HOME}/work/go-quick
 
+if [ "z${GO_ROOT}" = "z" ] ; then
+    echo Please provide a value for the environment variable GO_ROOT (for this script, NOT GOROOT)
+    echo The compiler there should have the inlining hack enabled.
+    exit
+fi
+
 if [ "z${MAXNOISE}" = "z" ] ; then
     MAXNOISE=1
     echo Lacking environment variable MAXNOISE, using default value "${MAXNOISE} (percent)"

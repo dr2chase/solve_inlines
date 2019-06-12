@@ -57,11 +57,12 @@ for S in `eval echo {${SEED0}..${SEEDN}}` ; do
     rm -rf goroots testbin
     mkdir -p testbin
     solve_inlines -seed ${S} -threshold ${THRESHOLD} "${BENCH_INLINES}" > inlines.txt
-        GO_INLMAXBUDGET=${MAXBUDGET} GO_INLBIGMAXBUDGET=${BIGMAXBUDGET} GO_INLRECORDSIZE=${RECORDSIZE} GO_INLRECORDS=$PWD/inlines.txt go build -a cmd/compile 
-        # GOMAXPROCS below assumes a machine with well more than that, goal is to stamp out variation everywhere.
-        # Compilebench runs the compiler single-threaded, but how does compilebench itself run?
-        while \
-                GOMAXPROCS=4 $PERFLOCK compilebench -compile ${PWD}/compile -count 25 -run BenchmarkCompile | sed -E -e 's?[0-9]+ ns/op ??' > testbin/compile.TEST.stdout
+    go clean -cache
+    GO_INLMAXBUDGET=${MAXBUDGET} GO_INLBIGMAXBUDGET=${BIGMAXBUDGET} GO_INLRECORDSIZE=${RECORDSIZE} GO_INLRECORDS=$PWD/inlines.txt go build -a cmd/compile 
+    # GOMAXPROCS below assumes a machine with well more than that, goal is to stamp out variation everywhere.
+    # Compilebench runs the compiler single-threaded, but how does compilebench itself run?
+    while \
+        GOMAXPROCS=4 $PERFLOCK compilebench -compile ${PWD}/compile -count 25 -run BenchmarkCompile | sed -E -e 's?[0-9]+ ns/op ??' > testbin/compile.TEST.stdout
 
         benchstat -geomean -csv testbin/*.TEST.stdout >& "${BENCH_STAT}"
 
@@ -82,9 +83,9 @@ for S in `eval echo {${SEED0}..${SEEDN}}` ; do
         else
                 test ${NOISE} -gt ${MAXNOISE}
         fi
-        do
+    do
         echo "Too noisy (${NOISE}), repeating test"
-        done 
+    done 
 
 echo "${THRESHOLD},${S},${TIME},${NOISE}" >> "${BENCH_TRIALS}"
 done
